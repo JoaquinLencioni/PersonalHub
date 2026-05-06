@@ -1620,13 +1620,16 @@ let finOffset = 0, finTab = 'mov', finTxType = 'gasto';
 
 
 function autoApplyFijos() {
-  const mk = getMonthKey(0); // only auto-apply current month
-  if (fijosApplied.includes(mk)) return; // already applied
-  if (fijosData.length === 0) return;    // nothing to apply
-  const existing = getMonthTxs(0);
-  if (existing.length > 0) return;       // month already has entries, skip
+  const mk = getMonthKey(0);
+  if (fijosData.length === 0) return;
+  if (fijosApplied.includes(mk)) {
+    // Double-check: if marked as applied but no fijo txs exist this month, re-apply
+    const fijoTxsThisMonth = getMonthTxs(0).filter(t => t.desc && t.desc.endsWith(' (fijo)'));
+    if (fijoTxsThisMonth.length > 0) return; // genuinely applied
+    // Remove stale applied marker and re-apply
+    fijosApplied = fijosApplied.filter(m => m !== mk);
+  }
 
-  // apply all fijos on the 1st of the month
   const firstDay = mk + '-01';
   fijosData.forEach(f => {
     finData.txs.push({
