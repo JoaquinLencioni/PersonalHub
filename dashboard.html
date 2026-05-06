@@ -972,8 +972,10 @@ const DAY_NAMES_SHORT = ['dom','lun','mar','mié','jue','vie','sáb'];
 // Returns virtual events from recurring rules for a given dateKey
 function getRecurEventsForDay(dk) {
   const d = new Date(dk + 'T12:00:00');
-  const dow = d.getDay(); // 0=dom … 6=sab
-  return recurData
+  const dow = d.getDay(); // 0=dom … 6=sab (JS native, for agenda recur)
+
+  // agenda recur rules
+  const agendaRecur = recurData
     .filter(r => r.days.includes(dow))
     .map(r => {
       const ovrKey = r.id + '_' + dk;
@@ -988,6 +990,29 @@ function getRecurEventsForDay(dk) {
         hasOvr: !!ovr
       };
     });
+
+  // entrenamiento recur rules (grid dow: 0=Mon, convert from JS dow)
+  const gridDow = dow === 0 ? 6 : dow - 1;
+  const wk = getDK((() => { const m=new Date(d); const dd=m.getDay(); m.setDate(m.getDate()-(dd===0?6:dd-1)); return m; })());
+  const entRecur = entRecurData
+    .filter(r => r.days.includes(gridDow))
+    .map(r => {
+      const ovrKey = r.id + '_' + gridDow + '_' + wk;
+      const ovr = entRecurOvr[ovrKey];
+      const tipo = getEntTipo(ovr ? ovr.tipo : r.tipo);
+      const dist = ovr ? ovr.dist : r.dist;
+      return {
+        id: 'recur_ent_' + r.id + '_' + dk,
+        title: tipo.icon + ' ' + tipo.label + (dist ? ` · ${dist}km` : ''),
+        time:  ovr ? ovr.time : (r.time||'07:00'),
+        cat:   'train',
+        note:  ovr ? (ovr.nota||'') : (r.nota||''),
+        recur: true, recurId: r.id, isEntRecur: true,
+        hasOvr: !!ovr
+      };
+    });
+
+  return [...agendaRecur, ...entRecur];
 }
 
 function agGetWeekDates(offset) {
@@ -1001,9 +1026,6 @@ function agFormatRange(o) {
 }
 
 function renderAgenda() {
-  // auto-sync entrenamiento recurrentes for the visible week
-  syncPlanToAgenda(agWeekOffset);
-
   const days = agGetWeekDates(agWeekOffset);
 
   document.getElementById('agenda-week-label').textContent = agFormatRange(agWeekOffset);
@@ -2418,7 +2440,7 @@ function syncPlanToAgenda(offset) {
   const wk   = getWeekKey(offset);
   const sessions = entPlan.weeks[wk] || [];
 
-  // sync one-off sessions
+  // sync one-off sessions only (recurrentes appear virtually via getRecurEventsForDay)
   sessions.forEach(s => {
     const d   = days[s.dow];
     const dk  = getDK(d);
@@ -2430,26 +2452,8 @@ function syncPlanToAgenda(offset) {
     }
   });
 
-  // sync recur sessions for this week (dow 0=Mon…6=Sun matches grid)
-  for (let dow=0; dow<7; dow++) {
-    const recurForDay = entRecurData.filter(r=>r.days.includes(dow));
-    if (!recurForDay.length) continue;
-    const d  = days[dow]; // days[0]=Mon, days[1]=Tue … days[6]=Sun ✓
-    const dk = getDK(d);
-    if (!agendaData[dk]) agendaData[dk]=[];
-    recurForDay.forEach(r => {
-      const tipo = getEntTipo(r.tipo);
-      const recurEntId = 'recur_ent_'+r.id+'_'+dow;
-      const exists = agendaData[dk].find(e=>e.entId===recurEntId);
-      if (!exists) {
-        agendaData[dk].push({ id: Date.now()+Math.random(), title: tipo.icon+' '+tipo.label+(r.dist?` · ${r.dist}km`:''), time: r.time||'07:00', cat:'train', note: r.nota||'', entId: recurEntId });
-      }
-    });
-  }
-
   saveAgendaFull();
 }
-
 // race countdown
 function raceCountdown(race) {
   const diff = daysUntil(race.date);
