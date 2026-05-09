@@ -679,9 +679,14 @@ async function _saveAgenda(dk) {
 
 async function saveAgendaFull() {
   const allRows = [];
+  // Collect all valid entIds from ent_plan
+  const validEntIds = new Set();
+  Object.values(entPlan.weeks).forEach(sessions => sessions.forEach(s => validEntIds.add(String(s.id))));
+
   Object.entries(agendaData).forEach(([date, evs]) => {
     (evs||[])
       .filter(e => !String(e.id).startsWith('recur_ent_')) // never persist virtual ent recurrentes
+      .filter(e => !e.entId || validEntIds.has(String(e.entId))) // remove orphaned ent sync entries
       .forEach(e => allRows.push({ id: String(e.id), date, title: e.title||'', time: e.time||'', cat: e.cat||'', note: e.note||'' }));
   });
   // Delete all rows using a always-true filter, then upsert
@@ -2533,7 +2538,6 @@ function renderEntrenamiento() {
           <span style="font-size:13px;font-weight:500;min-width:160px;text-align:center">${weekLabel(entWeekOffset)}</span>
           <button class="btn" id="ent-next">→</button>
         </div>
-        <button class="btn" id="ent-sync-btn" style="font-size:12px">↪ sync agenda</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:4px">
         ${days.map((d,i)=>{
@@ -2563,7 +2567,6 @@ function renderEntrenamiento() {
 
     document.getElementById('ent-prev').onclick = ()=>{ entWeekOffset--; renderEntrenamiento(); };
     document.getElementById('ent-next').onclick = ()=>{ entWeekOffset++; renderEntrenamiento(); };
-    document.getElementById('ent-sync-btn').onclick = ()=>{ syncPlanToAgenda(entWeekOffset); alert('Sesiones sincronizadas con la agenda ✓'); };
 
     content.querySelectorAll('[data-entdow]').forEach(el=>{
       el.addEventListener('click',()=>openEntModal(parseInt(el.dataset.entdow), el.dataset.entwk));
