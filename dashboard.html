@@ -680,7 +680,9 @@ async function _saveAgenda(dk) {
 async function saveAgendaFull() {
   const allRows = [];
   Object.entries(agendaData).forEach(([date, evs]) => {
-    (evs||[]).forEach(e => allRows.push({ id: String(e.id), date, title: e.title||'', time: e.time||'', cat: e.cat||'', note: e.note||'' }));
+    (evs||[])
+      .filter(e => !String(e.id).startsWith('recur_ent_')) // never persist virtual ent recurrentes
+      .forEach(e => allRows.push({ id: String(e.id), date, title: e.title||'', time: e.time||'', cat: e.cat||'', note: e.note||'' }));
   });
   // Delete all rows using a always-true filter, then upsert
   await fetch(`${SUPA_URL}/rest/v1/agenda?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, {
@@ -802,7 +804,7 @@ async function loadAllData() {
 
   // agenda
   agendaData = {};
-  (agRows||[]).forEach(r => {
+  (agRows||[]).filter(r => !String(r.id).startsWith('recur_ent_')).forEach(r => {
     if (!agendaData[r.date]) agendaData[r.date] = [];
     agendaData[r.date].push({ id: r.id, title: r.title, time: r.time, cat: r.cat, note: r.note });
   });
