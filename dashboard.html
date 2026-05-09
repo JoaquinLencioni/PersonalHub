@@ -690,7 +690,7 @@ async function saveAgendaFull() {
       .forEach(e => allRows.push({ id: String(e.id), date, title: e.title||'', time: e.time||'', cat: e.cat||'', note: e.note||'' }));
   });
   // Delete all rows using a always-true filter, then upsert
-  await fetch(`${SUPA_URL}/rest/v1/agenda?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, {
+  await fetch(`${SUPA_URL}/rest/v1/agenda?id=neq.__NEVER_EXISTS__`, {
     method: 'DELETE',
     headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
   });
@@ -699,87 +699,87 @@ async function saveAgendaFull() {
 
 async function saveHabits() {
   const hRows = habData.habits.map(h => ({ id: h.id, name: h.name, color: h.color }));
-  await fetch(`${SUPA_URL}/rest/v1/habits?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/habits?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (hRows.length) await supa.upsert('habits', hRows);
 }
 
 async function saveHabitsLog() {
   const logRows = [];
   Object.entries(habData.log).forEach(([date, ids]) => ids.forEach(id => logRows.push({ date, habit_id: id })));
-  await fetch(`${SUPA_URL}/rest/v1/habits_log?date=neq.IMPOSSIBLE_DATE_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/habits_log?date=gte.2000-01-01`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (logRows.length) await supa.upsert('habits_log', logRows);
 }
 
 async function saveFinanzas() {
   const rows = finData.txs.map(t => ({ id: t.id, type: t.type, descripcion: t.desc, amount: t.amount, date: t.date, cat: t.cat }));
-  await fetch(`${SUPA_URL}/rest/v1/finanzas?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/finanzas?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('finanzas', rows);
 }
 
 async function saveCartera() {
   const rows = cartData.positions.map(p => ({ id: p.id, ticker: p.ticker, name: p.name||'', type: p.type, cost: p.cost, current_value: p.currentValue, currency: p.currency||'ARS', qty: p.qty||null }));
-  await fetch(`${SUPA_URL}/rest/v1/cartera?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/cartera?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('cartera', rows);
 }
 
 async function saveMaterias() {
   const rows = matData.map(m => ({ id: m.id, name: m.name, estado: m.estado, nota: m.nota||null, pct: m.pct||0, corr: m.corr||'', pomo_count: m.pomoCount||0 }));
-  await fetch(`${SUPA_URL}/rest/v1/materias?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/materias?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('materias', rows);
 }
 
 async function saveFacuEventos() {
   const rows = evData.map(e => ({ id: e.id, title: e.title, date: e.date, time: e.time||'09:00', tipo: e.tipo, mat_id: e.matId||null, nota: e.nota||null, done: e.done||false }));
-  await fetch(`${SUPA_URL}/rest/v1/facu_eventos?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/facu_eventos?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('facu_eventos', rows);
 }
 
 async function _saveFijos() {
   const rows = fijosData.map(f => ({ id: f.id, type: f.type, descripcion: f.desc, amount: f.amount, cat: f.cat }));
-  await fetch(`${SUPA_URL}/rest/v1/fijos?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/fijos?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('fijos', rows);
 }
 
 async function _saveFijosApplied() {
   const rows = fijosApplied.map(mk => ({ month_key: mk }));
-  await fetch(`${SUPA_URL}/rest/v1/fijos_applied?month_key=neq.IMPOSSIBLE_KEY_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/fijos_applied?month_key=neq.__NEVER_EXISTS__`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('fijos_applied', rows);
 }
 
 async function _saveRecurOvr() {
   const rows = Object.entries(recurOvr).map(([key,v]) => ({ key, title: v.title, time: v.time, cat: v.cat, note: v.note||'' }));
-  await fetch(`${SUPA_URL}/rest/v1/recur_ovr?key=neq.IMPOSSIBLE_KEY_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/recur_ovr?key=neq.__NEVER_EXISTS__`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('recur_ovr', rows);
 }
 
 async function saveRecurRules() {
   const rows = recurData.map(r => ({ id: r.id, days: r.days, title: r.title, time: r.time||'', cat: r.cat, note: r.note||'' }));
-  await fetch(`${SUPA_URL}/rest/v1/recur?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/recur?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('recur', rows);
 }
 
 async function _saveEnt() {
   const rows = [];
   Object.entries(entPlan.weeks).forEach(([wk, sessions]) => sessions.forEach(s => rows.push({ id: s.id, week_key: wk, dow: s.dow, tipo: s.tipo, dist: s.dist||null, ritmo: s.ritmo||'', time: s.time||'07:00', nota: s.nota||'' })));
-  await fetch(`${SUPA_URL}/rest/v1/ent_plan?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/ent_plan?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('ent_plan', rows);
 }
 
 async function _saveRaces() {
   const rows = entRaces.map(r => ({ id: r.id, name: r.name, dist: r.dist, date: r.date, fase_inicio: r.fase_inicio||'' }));
-  await fetch(`${SUPA_URL}/rest/v1/ent_races?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/ent_races?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('ent_races', rows);
 }
 
 async function _saveEntRecur() {
   const rows = entRecurData.map(r => ({ id: r.id, days: r.days, tipo: r.tipo, dist: r.dist||null, ritmo: r.ritmo||'', time: r.time||'07:00', nota: r.nota||'' }));
-  await fetch(`${SUPA_URL}/rest/v1/ent_recur?id=neq.IMPOSSIBLE_ID_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/ent_recur?id=gte.0`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('ent_recur', rows);
 }
 
 async function _saveEntRecurOvr() {
   const rows = Object.entries(entRecurOvr).map(([key,v]) => ({ key, tipo: v.tipo, dist: v.dist||null, ritmo: v.ritmo||'', time: v.time||'07:00', nota: v.nota||'' }));
-  await fetch(`${SUPA_URL}/rest/v1/ent_recur_ovr?key=neq.IMPOSSIBLE_KEY_PLACEHOLDER`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
+  await fetch(`${SUPA_URL}/rest/v1/ent_recur_ovr?key=neq.__NEVER_EXISTS__`, { method: 'DELETE', headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (rows.length) await supa.upsert('ent_recur_ovr', rows);
 }
 
